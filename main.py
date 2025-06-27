@@ -66,10 +66,10 @@ def processar_todos():
     def ordenar(nome):
         return [int(bloco) if bloco.isdigit() else bloco.lower() 
             for bloco in re.split(r'(\d+)', nome)]
-    arquivos = sorted([
+    arquivos = [
         f.strip() for f in os.listdir(pasta_entrada)
         if f.lower().strip().endswith(".dat")
-    ], key=ordenar)
+    ]
 
     args_list = [(arq, pasta_entrada, pasta_saida) for arq in arquivos]
 

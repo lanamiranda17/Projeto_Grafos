@@ -78,7 +78,9 @@ def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
     rotas.sort(key=lambda r: len(r['servicos']))  # Começa tentando remover as menores
 
     i = 0
-    while i < len(rotas):
+    iteracoes = 0
+    max_iteracoes = 200  # Limite de 200 iterações
+    while i < len(rotas) and iteracoes < max_iteracoes:
         rota_atual = rotas[i]
         realocado = False
 
@@ -116,6 +118,7 @@ def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
             rotas.pop(i)
         else:
             i += 1
+        iteracoes += 1
 
     return rotas
 
