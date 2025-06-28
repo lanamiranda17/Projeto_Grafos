@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 import os
 import time
+import itertools
 
 from leitura_escrita import *
 from estatisticas import *
@@ -46,6 +47,9 @@ def clarke_wright_otimizado(servicos, matriz_custos, capacidade):
         for j in range(n):
             if i != j:
                 economia = matriz_custos[0][i] + matriz_custos[0][j] - matriz_custos[i][j]
+                # Penalização adaptativa para fusões de rotas com grande diferença de carga
+                if abs(servicos[i]['demanda'] - servicos[j]['demanda']) > 50:
+                    economia *= 0.5  # Penaliza fusões de rotas muito desbalanceadas
                 economias.append((economia, i, j))
     
     # Ordena as economias em ordem decrescente
@@ -61,18 +65,46 @@ def clarke_wright_otimizado(servicos, matriz_custos, capacidade):
 
         nova_carga = rota_i['carga'] + rota_j['carga']
         if nova_carga <= capacidade:
-
-            # Penalização para evitar rotas ruins
-            if economia < 0 and len(rota_i['servicos']) + len(rota_j['servicos']) <= 3:
-                continue
-
-            # Une rotas
+            # União das rotas
             rota_i['servicos'].extend(rota_j['servicos'])
             rota_i['fim'] = rota_j['fim']
             rota_i['carga'] = nova_carga
             rotas.remove(rota_j)
 
     return rotas
+
+'''# Função 2-opt
+def dois_opt(rota, matriz_custos):
+    """
+    Implementa o 2-opt, que tenta melhorar a rota realizando trocas de dois segmentos.
+    """
+    melhorou = True
+    while melhorou:
+        melhorou = False
+        for i in range(1, len(rota['servicos']) - 1):
+            for j in range(i + 1, len(rota['servicos'])):
+                # Custo antes da troca
+                custo_antigo = custo_rota(rota, matriz_custos)
+
+                # Troca os segmentos
+                nova_rota = rota['servicos'][:i] + list(reversed(rota['servicos'][i:j])) + rota['servicos'][j:]
+                nova_rota = {'servicos': nova_rota}
+                novo_custo = custo_rota(nova_rota, matriz_custos)
+
+                # Se o novo custo for melhor, aceita a troca
+                if novo_custo < custo_antigo:
+                    rota['servicos'] = nova_rota['servicos']
+                    melhorou = True
+                    break
+            if melhorou:
+                break
+    return rota
+
+def aplicar_2_opt(rotas, matriz_custos):
+    for rota in rotas:
+        rota = dois_opt(rota, matriz_custos)  # Otimiza cada rota usando 2-opt
+    return rotas
+'''
 
 # Refinamento das rotas por realocação de serviços
 def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
@@ -125,6 +157,42 @@ def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
         iteracoes += 1
 
     return rotas
+
+def aplicar_3opt(rota, matriz_custos):
+    servicos = rota['servicos']
+    n = len(servicos)
+    melhor_custo = custo_rota(rota, matriz_custos)
+    melhor_seq = servicos[:]
+    if n < 4:
+        return rota  # 3-opt só faz sentido para rotas com pelo menos 4 serviços
+    for i, j, k in itertools.combinations(range(1, n), 3):
+        # Gera as 7 possíveis reconexões do 3-opt
+        partes = [servicos[:i], servicos[i:j], servicos[j:k], servicos[k:]]
+        opcoes = [  # cada opção é uma nova sequência
+            partes[0] + partes[1][::-1] + partes[2] + partes[3],
+            partes[0] + partes[1] + partes[2][::-1] + partes[3],
+            partes[0] + partes[2] + partes[1] + partes[3],
+            partes[0] + partes[2][::-1] + partes[1][::-1] + partes[3],
+            partes[0] + partes[2] + partes[1][::-1] + partes[3],
+            partes[0] + partes[1][::-1] + partes[2][::-1] + partes[3],
+            partes[0] + partes[2][::-1] + partes[1] + partes[3],
+        ]
+        for nova_seq in opcoes:
+            nova_rota = {'servicos': nova_seq}
+            novo_custo = custo_rota(nova_rota, matriz_custos)
+            if novo_custo < melhor_custo:
+                melhor_custo = novo_custo
+                melhor_seq = nova_seq[:]
+    rota['servicos'] = melhor_seq
+    return rota
+
+def refinar_rotas_por_3opt(rotas, servicos, matriz_custos, capacidade):
+    novas_rotas = []
+    for rota in rotas:
+        nova_rota = aplicar_3opt(rota, matriz_custos)
+        nova_rota['carga'] = sum(servicos[s]['demanda'] for s in nova_rota['servicos'])
+        novas_rotas.append(nova_rota)
+    return novas_rotas
 
 # Custo total da rota
 def custo_rota(rota, matriz_custos):
