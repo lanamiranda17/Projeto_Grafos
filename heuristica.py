@@ -74,12 +74,15 @@ def clarke_wright_otimizado(servicos, matriz_custos, capacidade):
 
     return rotas
 
+# Refinamento das rotas por realocação de serviços
 def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
-    rotas.sort(key=lambda r: len(r['servicos']))  # Começa tentando remover as menores
+    # Ordena as rotas pelo custo total (do mais caro para o mais barato)
+    rotas.sort(key=lambda r: custo_rota(r, matriz_custos), reverse=True)
 
     i = 0
     iteracoes = 0
     max_iteracoes = 200  # Limite de 200 iterações
+
     while i < len(rotas) and iteracoes < max_iteracoes:
         rota_atual = rotas[i]
         realocado = False
@@ -104,6 +107,7 @@ def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
                 destino_tmp = {'servicos': destino_simulada}
                 custo_novo = custo_rota(destino_tmp, matriz_custos)
 
+                # Realoca apenas se o custo diminuir significativamente
                 if custo_novo < custo_antigo + matriz_custos[0][serv_id] + matriz_custos[serv_id][0]:
                     # Realoca
                     destino['servicos'].append(serv_id)
