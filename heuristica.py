@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import time
 import itertools
+import random
 
 from leitura_escrita import *
 from estatisticas import *
@@ -73,38 +74,6 @@ def clarke_wright_otimizado(servicos, matriz_custos, capacidade):
 
     return rotas
 
-'''# Função 2-opt
-def dois_opt(rota, matriz_custos):
-    """
-    Implementa o 2-opt, que tenta melhorar a rota realizando trocas de dois segmentos.
-    """
-    melhorou = True
-    while melhorou:
-        melhorou = False
-        for i in range(1, len(rota['servicos']) - 1):
-            for j in range(i + 1, len(rota['servicos'])):
-                # Custo antes da troca
-                custo_antigo = custo_rota(rota, matriz_custos)
-
-                # Troca os segmentos
-                nova_rota = rota['servicos'][:i] + list(reversed(rota['servicos'][i:j])) + rota['servicos'][j:]
-                nova_rota = {'servicos': nova_rota}
-                novo_custo = custo_rota(nova_rota, matriz_custos)
-
-                # Se o novo custo for melhor, aceita a troca
-                if novo_custo < custo_antigo:
-                    rota['servicos'] = nova_rota['servicos']
-                    melhorou = True
-                    break
-            if melhorou:
-                break
-    return rota
-
-def aplicar_2_opt(rotas, matriz_custos):
-    for rota in rotas:
-        rota = dois_opt(rota, matriz_custos)  # Otimiza cada rota usando 2-opt
-    return rotas
-'''
 
 # Refinamento das rotas por realocação de serviços
 def refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade):
@@ -212,3 +181,44 @@ def custo_rota(rota, matriz_custos):
     custo += matriz_custos[servicos[-1]][0]
 
     return custo
+
+
+def grasp_simples(servicos, matriz_custos, capacidade, iteracoes=6):
+    """
+    GRASP leve com randomização de savings + realocação.
+    """
+    melhor_solucao = None
+    melhor_custo = float('inf')
+
+    for _ in range(iteracoes):
+        embaralhado = random.sample(servicos, len(servicos))
+        rotas = clarke_wright_otimizado(embaralhado, matriz_custos, capacidade)
+        rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
+        custo = sum(custo_rota(r, matriz_custos) for r in rotas)
+
+        if custo < melhor_custo:
+            melhor_custo = custo
+            melhor_solucao = rotas
+
+    return melhor_solucao
+
+
+def refinar_condicional(rotas, servicos, matriz_custos, capacidade, nome_instancia):
+    """
+    Refinamento adaptativo por tamanho da instância:
+    - Pequena: 3-opt + realocação
+    - Média: realocação apenas
+    - Grande: sem refinamento pesado
+    """
+    num_servicos = len(servicos)
+    num_rotas = len(rotas)
+
+    if num_servicos <= 100:
+        rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
+        rotas = refinar_rotas_por_3opt(rotas, servicos, matriz_custos, capacidade)
+    elif num_servicos <= 300:
+        rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
+    else:
+        rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
+
+    return rotas

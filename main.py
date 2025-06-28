@@ -23,8 +23,14 @@ def processar_instancia(arquivo_entrada):
     capacidade = capacidade_veiculo(cabecalho)
 
     inicio_alg = time.perf_counter_ns()
+    num_servicos = len(servicos)
+
     rotas = clarke_wright_otimizado(servicos, matriz_custos, capacidade)
-    rotas = refinar_rotas_por_3opt(rotas, servicos, matriz_custos, capacidade)
+    if num_servicos <= 300:
+        rotas = grasp_simples(servicos, matriz_custos, capacidade)
+
+    rotas = refinar_condicional(rotas, servicos, matriz_custos, capacidade, nome_base)
+
     fim_alg = time.perf_counter_ns()
 
     custo = sum(custo_rota(rota, matriz_custos) for rota in rotas)
