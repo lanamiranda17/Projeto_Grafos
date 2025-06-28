@@ -1,7 +1,3 @@
-import csv
-import pandas as pd
-import os
-import time
 import itertools
 import random
 
@@ -184,9 +180,8 @@ def custo_rota(rota, matriz_custos):
 
 
 def grasp_simples(servicos, matriz_custos, capacidade, iteracoes=6):
-    """
-    GRASP leve com randomização de savings + realocação.
-    """
+    # GRASP leve com randomização de savings + realocação.
+    
     melhor_solucao = None
     melhor_custo = float('inf')
 
@@ -211,7 +206,6 @@ def refinar_condicional(rotas, servicos, matriz_custos, capacidade, nome_instanc
     - Grande: sem refinamento pesado
     """
     num_servicos = len(servicos)
-    num_rotas = len(rotas)
 
     if num_servicos <= 100:
         rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
@@ -219,6 +213,6 @@ def refinar_condicional(rotas, servicos, matriz_custos, capacidade, nome_instanc
     elif num_servicos <= 300:
         rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
     else:
-        rotas = refinar_rotas_por_realocacao(rotas, servicos, matriz_custos, capacidade)
+        pass  # sem refinamento pesado
 
     return rotas

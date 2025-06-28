@@ -1,8 +1,4 @@
-import csv
-import pandas as pd
-import os
-import time
-
+from estatisticas import *
 
 # Tratamento de erro
 def transforma(valor):
@@ -150,32 +146,6 @@ def ler_entrada(arq_entrada):
                 print(f"   Detalhes: {e}")
 
     return cabecalho, grafo, servicos_obrigatorios
-
-
-# Funçoes auxiliares extraem e limpam os dados do cabeçalho do arquivo .dat.
-def quant_vertices(cabecalho):
-    return transforma(cabecalho.get('#Nodes'))
-
-def quant_arestas(cabecalho):
-    return transforma(cabecalho.get('#Edges'))
-
-def quant_arcos(cabecalho):
-    return transforma(cabecalho.get('#Arcs'))
-
-def quant_vertices_requeridos(cabecalho):
-    return transforma(cabecalho.get('#Required N'))
-
-def quant_arestas_requeridas(cabecalho):
-    return transforma(cabecalho.get('#Required E'))
-
-def quant_arcos_requeridos(cabecalho):
-    return transforma(cabecalho.get('#Required A'))
-
-def capacidade_veiculo(cabecalho):
-    return transforma(cabecalho.get('Capacity'))
-
-def deposito(cabecalho):
-    return transforma(cabecalho.get('Depot Node'))
 
 
 # Salva os resultados no formato padronizado

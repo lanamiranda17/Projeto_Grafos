@@ -1,10 +1,30 @@
-import csv
-import pandas as pd
-import os
-import time
-
 from leitura_escrita import *
-from leitura_escrita import transforma
+from leitura_escrita import transforma # Para evitar erro de importação
+
+# Funçoes auxiliares extraem do cabeçalho do arquivo .dat.
+def quant_vertices(cabecalho):
+    return transforma(cabecalho.get('#Nodes'))
+
+def quant_arestas(cabecalho):
+    return transforma(cabecalho.get('#Edges'))
+
+def quant_arcos(cabecalho):
+    return transforma(cabecalho.get('#Arcs'))
+
+def quant_vertices_requeridos(cabecalho):
+    return transforma(cabecalho.get('#Required N'))
+
+def quant_arestas_requeridas(cabecalho):
+    return transforma(cabecalho.get('#Required E'))
+
+def quant_arcos_requeridos(cabecalho):
+    return transforma(cabecalho.get('#Required A'))
+
+def capacidade_veiculo(cabecalho):
+    return transforma(cabecalho.get('Capacity'))
+
+def deposito(cabecalho):
+    return transforma(cabecalho.get('Depot Node'))
 
 # Calcula a densidade real do grafo
 def densidade_grafo (cabecalho):
